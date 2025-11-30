@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mon Name • Register .mon Domain</title>
+    <link rel="icon" href="https://www.mon.dog/images/mdog.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            min-height:100vh;
+            background:radial-gradient(circle at center,#1a0033 0%,#000 100%);
+            color:#e0ccff;
+            font-family:'Orbitron',sans-serif;
+            overflow:hidden;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .bg{
+            position:absolute;
+            inset:0;
+            background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><radialGradient id="g"><stop offset="0%" stop-color="%238a2be2"/><stop offset="100%" stop-color="%230000ff00"/></radialGradient></defs><circle cx="50" cy="50" r="40" fill="url(%23g)" opacity="0.15"/></svg>') repeat;
+            background-size:120px 120px;
+            animation:float 25s infinite linear;
+        }
+        @keyframes float{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
+        .container{
+            position:relative;
+            z-index:10;
+            background:rgba(26,0,51,0.7);
+            backdrop-filter:blur(12px);
+            border:1px solid #b14bff;
+            border-radius:20px;
+            padding:2.5rem;
+            width:90%;
+            max-width:460px;
+            box-shadow:0 0 40px rgba(177,75,255,0.4);
+        }
+        .logo{
+            width:120px;
+            height:120px;
+            margin:0 auto 1rem;
+            display:block;
+            filter:drop-shadow(0 0 30px #b14bff);
+            animation:glow 3s ease-in-out infinite alternate;
+        }
+        @keyframes glow{from{filter:drop-shadow(0 0 20px #b14bff)}to{filter:drop-shadow(0 0 40px #d46aff)}}
+        h1{
+            font-size:3rem;
+            font-weight:900;
+            text-align:center;
+            background:linear-gradient(135deg,#d46aff,#b14bff);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            margin-bottom:1.5rem;
+        }
+        input, button{
+            width:100%;
+            padding:0.95rem 1.2rem;
+            border-radius:12px;
+            font-family:'Orbitron',sans-serif;
+            font-size:1rem;
+            margin-bottom:1rem;
+        }
+        input{
+            background:rgba(177,75,255,0.1);
+            border:1px solid #b14bff;
+            color:white;
+            outline:none;
+        }
+        input::placeholder{color:#b583ff}
+        button{
+            background:linear-gradient(135deg,#b14bff,#9d4edd);
+            color:white;
+            border:none;
+            font-weight:700;
+            cursor:pointer;
+            transition:all 0.3s;
+        }
+        button:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(177,75,255,0.5);}
+        button:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+        .status{font-size:0.9rem;text-align:center;margin:1rem 0;min-height:1.5em;}
+        .my-domains{margin-top:2rem;}
+        .domain-item{
+            background:rgba(177,75,255,0.15);
+            padding:0.8rem;
+            margin-bottom:0.8rem;
+            border-radius:10px;
+            border:1px solid #b14bff;
+            word-break:break-all;
+        }
+        .contract{
+            font-size:0.75rem;
+            text-align:center;
+            opacity:0.7;
+            margin-top:1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg"></div>
+    <div class="container">
+        <img src="https://www.mon.dog/images/mdog.png" alt="MonDog" class="logo">
+        <h1>Mon Name</h1>
+
+        <input id="domainInput" placeholder="Enter name (1-15 chars)" maxlength="15">
+        <button id="connectBtn">Connect Wallet</button>
+        <button id="mintBtn" disabled>Mint .mon • 100 MON</button>
+
+        <div class="status" id="status">Please connect wallet on Monad</div>
+
+        <div class="my-domains" id="myDomains" style="display:none">
+            <h3 style="margin:1.5rem 0 1rem;font-size:1.3rem;">My .mon Domains</h3>
+            <div id="domainsList"></div>
+        </div>
+
+        <div class="contract">
+            Contract: 0xE918bF4382F3537A3D6F228C1d5F965931E12dE5
+        </div>
+    </div>
+
+<script>
+    const CONTRACT = "0xE918bF4382F3537A3D6F228C1d5F965931E12dE5";
+    const PRICE = "100000000000000000000"; // 100 MON
+    const MONAD = {
+        chainId: "0x8f",
+        chainName: "Monad",
+        nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
+        rpcUrls: ["https://rpc.monad.xyz"],
+        blockExplorerUrls: ["https://monadscan.com"]
+    };
+
+    const abi = [
+        {"inputs":[{"internalType":"string","name":"name","type":"string"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"},
+        {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenName","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"ownedTokens","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+    ];
+
+    let web3, account, contract;
+
+    async function connect() {
+        if (!window.ethereum) {
+            alert("Please install MetaMask");
+            return;
+        }
+        web3 = new Web3(window.ethereum);
+        try {
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+            const chainId = await web3.eth.getChainId();
+            if (chainId !== 143) {
+                try {
+                    await window.ethereum.request({
+                        method: "wallet_switchEthereumChain",
+                        params: [{ chainId: "0x8f" }]
+                    });
+                } catch (e) {
+                    await window.ethereum.request({
+                        method: "wallet_addEthereumChain",
+                        params: [MONAD]
+                    });
+                }
+            }
+            account = (await web3.eth.getAccounts())[0];
+            contract = new web3.eth.Contract(abi, CONTRACT);
+            document.getElementById("connectBtn").innerText = `${account.slice(0,6)}...${account.slice(-4)}`;
+            document.getElementById("mintBtn").disabled = false;
+            document.getElementById("status").innerText = "Connected on Monad";
+            loadMyDomains();
+        } catch (e) {
+            document.getElementById("status").innerText = "Connection failed";
+        }
+    }
+
+    async function mint() {
+        const name = document.getElementById("domainInput").value.trim();
+        if (!name || name.length > 15) {
+            document.getElementById("status").innerText = "Invalid name (1-15 chars)";
+            return;
+        }
+        document.getElementById("mintBtn").disabled = true;
+        document.getElementById("status").innerText = "Minting...";
+        try {
+            const tx = await contract.methods.mint(name).send({
+                from: account,
+                value: PRICE
+            });
+            document.getElementById("status").innerText = `Minted! ${name}.mon • Tx: ${tx.transactionHash.slice(0,10)}...`;
+            document.getElementById("domainInput").value = "";
+            loadMyDomains();
+        } catch (e) {
+            document.getElementById("status").innerText = e.message.includes("nameTaken") ? "Name already taken" : "Mint failed";
+        }
+        document.getElementById("mintBtn").disabled = false;
+    }
+
+    async function loadMyDomains() {
+        if (!contract || !account) return;
+        try {
+            const balance = await contract.methods.balanceOf(account).call();
+            const list = document.getElementById("domainsList");
+            list.innerHTML = "";
+            if (balance == 0) {
+                document.getElementById("myDomains").style.display = "none";
+                return;
+            }
+            document.getElementById("myDomains").style.display = "block";
+            for (let i = 0; i < balance; i++) {
+                const tokenId = await contract.methods.ownedTokens(account, i).call();
+                const fullName = await contract.methods.tokenName(tokenId).call();
+                const div = document.createElement("div");
+                div.className = "domain-item";
+                div.innerText = fullName;
+                list.appendChild(div);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    document.getElementById("connectBtn").onclick = connect;
+    document.getElementById("mintBtn").onclick = mint;
+    document.getElementById("domainInput").addEventListener("keypress", e => {
+        if (e.key === "Enter") mint();
+    });
+</script>
+</body>
+</html>
